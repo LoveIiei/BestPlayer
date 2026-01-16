@@ -2,138 +2,273 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>M3U8 AirPlay Tester</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>StreamCast Player</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
     <style>
+        :root {
+            /* Adjusted for better contrast against new background */
+            --bg-card: #131313; 
+            --bg-input: #202020;
+            --accent: #0A84FF;
+            --accent-hover: #006add;
+            --text-primary: #ffffff;
+            --text-secondary: #888888;
+            --radius-lg: 20px;
+            --radius-md: 14px;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #1a1a1a;
-            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-primary);
+            margin: 0;
+            padding: 30px 20px;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
-            margin: 0;
+            justify-content: center;
+            box-sizing: border-box;
+            
+            /* --- NEW BACKGROUND --- */
+            background-color: #050505;
+            /* Subtle grid pattern overlaying a dark radial gradient */
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), 
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                radial-gradient(circle at center, #1a1a1a 0%, #000000 80%);
+            background-size: 60px 60px, 60px 60px, 100% 100%;
+            background-attachment: fixed; /* Keeps background steady on scroll */
         }
-        .container {
+
+        .app-container {
             width: 100%;
-            max-width: 800px;
-            text-align: center;
+            max-width: 850px;
+            background-color: var(--bg-card);
+            padding: 35px;
+            border-radius: var(--radius-lg);
+            /* Deeper, softer shadow for more pop */
+            box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 0 0 1px rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px); /* Subtle frosted glass effect if supported */
         }
-        h2 { margin-bottom: 10px; }
-        
-        /* Input & Button Styling */
-        .input-group {
+
+        /* Header area */
+        header {
+            margin-bottom: 30px;
             display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
+            align-items: center;
+            gap: 12px;
         }
+        
+        .logo-icon {
+            width: 34px;
+            height: 34px;
+            fill: var(--accent);
+            filter: drop-shadow(0 0 8px rgba(10, 132, 255, 0.4));
+        }
+
+        h1 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 26px;
+            letter-spacing: -0.5px;
+        }
+
+        /* Control Bar */
+        .control-bar {
+            display: flex;
+            background: var(--bg-input);
+            border-radius: var(--radius-md);
+            padding: 5px;
+            border: 1px solid #2a2a2a;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+
+        .control-bar:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.15);
+            background: #252525;
+        }
+
         input[type="text"] {
             flex-grow: 1;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #444;
-            background: #333;
-            color: white;
+            padding: 14px 18px;
+            border: none;
+            background: transparent;
+            color: var(--text-primary);
             font-size: 16px;
+            font-family: inherit;
+            outline: none;
         }
-        button {
-            padding: 10px 20px;
-            background-color: #007AFF; /* Apple Blue */
+
+        input[type="text"]::placeholder { color: #666; }
+
+        .play-btn {
+            padding: 10px 26px;
+            background-color: var(--accent);
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 10px;
             font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
-            font-weight: bold;
-        }
-        button:hover { background-color: #0056b3; }
-
-        /* Video Player Styling */
-        video {
-            width: 100%;
-            aspect-ratio: 16/9;
-            background: black;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(10, 132, 255, 0.3);
         }
         
-        .status {
-            margin-top: 10px;
+        .play-btn:hover { 
+            background-color: var(--accent-hover);
+            box-shadow: 0 6px 16px rgba(10, 132, 255, 0.5);
+            transform: translateY(-1px);
+        }
+        .play-btn:active { transform: translateY(1px); }
+
+        /* Video Container */
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+            background: #000;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        video {
+            width: 100%;
+            display: block;
+            aspect-ratio: 16/9;
+            outline: none;
+        }
+        
+        /* Status bar */
+        .status-bar {
+            margin-top: 18px;
+            display: flex;
+            justify-content: space-between;
             font-size: 14px;
-            color: #aaa;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .dot {
+             height: 8px;
+             width: 8px;
+             background-color: #444;
+             border-radius: 50%;
+             display: inline-block;
+             transition: all 0.3s;
+        }
+        .dot.active { background-color: #2ecc71; box-shadow: 0 0 10px #2ecc71; }
+        .dot.error { background-color: #e74c3c; box-shadow: 0 0 10px #e74c3c; }
+
+        /* Mobile adjustments */
+        @media (max-width: 650px) {
+            body { padding: 15px 10px; align-items: flex-start; }
+            .app-container { padding: 25px 20px; }
+            header { justify-content: center; margin-bottom: 20px;}
+            .control-bar { flex-direction: column; background: transparent; border: none; padding: 0; box-shadow: none; }
+            input[type="text"] { background: var(--bg-input); border-radius: var(--radius-md); margin-bottom: 12px; border: 1px solid #2a2a2a; padding: 16px; }
+            .play-btn { width: 100%; justify-content: center; padding: 16px; }
+            .status-bar { flex-direction: column; gap: 10px; align-items: center; }
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>M3U8 & AirPlay Tester</h2>
+<main class="app-container">
+    <header>
+        <svg class="logo-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M21 3H3C1.89543 3 1 3.89543 1 5V19C1 20.1046 1.89543 21 3 21H21C22.1046 21 23 20.1046 23 19V5C23 3.89543 22.1046 3 21 3ZM3 5H21V19H3V5ZM5 17V15C8.31371 15 11 12.3137 11 9H13C13 13.4183 9.41828 17 5 17ZM5 13V11C6.10457 11 7 10.1046 7 9H9C9 11.2091 7.20914 13 5 13ZM5 9V7C3.89543 7 3 7.89543 3 9H5Z"/></svg>
+        <h1>StreamCast</h1>
+    </header>
     
-    <div class="input-group">
-        <input type="text" id="streamUrl" placeholder="Paste your .m3u8 link here..." value="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8">
-        <button onclick="loadStream()">Play</button>
+    <div class="control-bar">
+        <input type="text" id="streamUrl" placeholder="Paste .m3u8 link here..." value="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8">
+        <button class="play-btn" onclick="loadStream()">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 12L4 21.5V2.5L20 12Z" fill="currentColor"/></svg>
+            Play
+        </button>
     </div>
 
-    <video id="video" controls playsinline></video>
+    <div class="video-wrapper">
+        <video id="video" controls playsinline poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='1' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='2' width='20' height='20' rx='2.18' ry='2.18'/%3E%3Cline x1='7' y1='2' x2='7' y2='22'/%3E%3Cline x1='17' y1='2' x2='17' y2='22'/%3E%3Cline x1='2' y1='12' x2='22' y2='12'/%3E%3Cline x1='2' y1='7' x2='7' y2='7'/%3E%3Cline x1='2' y1='17' x2='7' y2='17'/%3E%3Cline x1='17' y1='17' x2='22' y2='17'/%3E%3Cline x1='17' y1='7' x2='22' y2='7'/%3E%3C/svg%3E"></video>
+    </div>
     
-    <div class="status" id="statusLog">Ready to test...</div>
-</div>
+    <div class="status-bar">
+        <div class="status-indicator">
+             <span id="statusDot" class="dot"></span>
+             <span id="statusLog">Ready to stream</span>
+        </div>
+        <div style="opacity: 0.7; display: flex; align-items: center; gap:6px">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M21 3H3C1.89543 3 1 3.89543 1 5V19C1 20.1046 1.89543 21 3 21H21C22.1046 21 23 20.1046 23 19V5C23 3.89543 22.1046 3 21 3ZM21 19H3V17H21V19ZM21 15H3V5H21V15ZM8 13H6V11H8V13ZM11 13H9V11H11V13ZM14 13H12V11H14V13ZM17 13H15V11H17V13Z"/></svg>
+            AirPlay / Cast Compatible
+        </div>
+    </div>
+</main>
 
 <script>
     var video = document.getElementById('video');
     var input = document.getElementById('streamUrl');
     var statusLog = document.getElementById('statusLog');
+    var statusDot = document.getElementById('statusDot');
+
+    function updateStatus(msg, type) {
+        statusLog.innerText = msg;
+        statusDot.className = 'dot ' + (type || '');
+    }
 
     function loadStream() {
         var url = input.value.trim();
         if (!url) {
-            log("Please enter a URL.");
+            updateStatus("Please enter a valid URL.", "error");
             return;
         }
 
-        log("Attempting to load...");
+        updateStatus("Establishing connection...", "active");
 
-        // 1. Check for Native Support (Safari/iOS) - This is key for AirPlay
+        // 1. Safari / Native AirPlay Support
         if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            log("Detected Native HLS support (Safari/iOS). AirPlay enabled.");
             video.src = url;
             video.addEventListener('loadedmetadata', function() {
                 video.play();
-                log("Playing natively.");
+                updateStatus("Streaming via Native AirPlay support.", "active");
             });
-            // Error handling for native
-            video.addEventListener('error', function() {
-                log("Error: Native player could not load stream. Check CORS or URL.");
+            video.addEventListener('error', function(e) {
+                updateStatus("Stream failed. Check URL or CORS permissions.", "error");
             });
 
-        // 2. Check for HLS.js Support (Chrome/Firefox/Edge)
+        // 2. HLS.js Support (PC/Chrome/Firefox)
         } else if (Hls.isSupported()) {
-            log("Detected Non-Safari browser. Using HLS.js engine.");
             var hls = new Hls();
             hls.loadSource(url);
             hls.attachMedia(video);
             hls.on(Hls.Events.MANIFEST_PARSED, function() {
                 video.play();
-                log("Playing via HLS.js.");
+                updateStatus("Streaming via HLS engine.", "active");
             });
-            // Error handling for HLS.js
             hls.on(Hls.Events.ERROR, function (event, data) {
                  if (data.fatal) {
-                    log("Error: HLS.js fatal error. Details in console.");
+                    updateStatus("Connection refused or stream not found.", "error");
                  }
             });
 
-        // 3. No support found
         } else {
-            log("Error: Your browser does not support HLS playback.");
+            updateStatus("Your browser does not support this stream type.", "error");
         }
-    }
-
-    function log(msg) {
-        statusLog.innerText = msg;
-        console.log(msg);
     }
 </script>
 
