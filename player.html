@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M3U8 AirPlay Tester</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+        h2 { margin-bottom: 10px; }
+        
+        /* Input & Button Styling */
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background: #333;
+            color: white;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007AFF; /* Apple Blue */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover { background-color: #0056b3; }
+
+        /* Video Player Styling */
+        video {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: black;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        
+        .status {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>M3U8 & AirPlay Tester</h2>
+    
+    <div class="input-group">
+        <input type="text" id="streamUrl" placeholder="Paste your .m3u8 link here..." value="https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8">
+        <button onclick="loadStream()">Play</button>
+    </div>
+
+    <video id="video" controls playsinline></video>
+    
+    <div class="status" id="statusLog">Ready to test...</div>
+</div>
+
+<script>
+    var video = document.getElementById('video');
+    var input = document.getElementById('streamUrl');
+    var statusLog = document.getElementById('statusLog');
+
+    function loadStream() {
+        var url = input.value.trim();
+        if (!url) {
+            log("Please enter a URL.");
+            return;
+        }
+
+        log("Attempting to load...");
+
+        // 1. Check for Native Support (Safari/iOS) - This is key for AirPlay
+        if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            log("Detected Native HLS support (Safari/iOS). AirPlay enabled.");
+            video.src = url;
+            video.addEventListener('loadedmetadata', function() {
+                video.play();
+                log("Playing natively.");
+            });
+            // Error handling for native
+            video.addEventListener('error', function() {
+                log("Error: Native player could not load stream. Check CORS or URL.");
+            });
+
+        // 2. Check for HLS.js Support (Chrome/Firefox/Edge)
+        } else if (Hls.isSupported()) {
+            log("Detected Non-Safari browser. Using HLS.js engine.");
+            var hls = new Hls();
+            hls.loadSource(url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                video.play();
+                log("Playing via HLS.js.");
+            });
+            // Error handling for HLS.js
+            hls.on(Hls.Events.ERROR, function (event, data) {
+                 if (data.fatal) {
+                    log("Error: HLS.js fatal error. Details in console.");
+                 }
+            });
+
+        // 3. No support found
+        } else {
+            log("Error: Your browser does not support HLS playback.");
+        }
+    }
+
+    function log(msg) {
+        statusLog.innerText = msg;
+        console.log(msg);
+    }
+</script>
+
+</body>
+</html>
